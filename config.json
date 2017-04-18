@@ -1,0 +1,5 @@
+{
+  "name": "Pastoral Image Corpus",
+  "description": "a website dedicated to cataloging pastoral photos on the internet",
+  "images": "images.json"
+}
