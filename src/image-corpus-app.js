@@ -18,7 +18,7 @@ class ImageCorpusApp extends React.Component {
     };
   }
   dataLoaded(err, opts) {
-    if (err) return this.setState({loaded: true, error: err.message});
+    if (err) return this.setState({ loaded: true, error: err.message });
     this.setState({
       loaded: true,
       config: opts.configData,
@@ -26,29 +26,32 @@ class ImageCorpusApp extends React.Component {
     });
   }
   componentDidMount() {
-    loadData({repo:this.props.repo, config:this.props.config}, this.dataLoaded.bind(this));
+    loadData(
+      { repo: this.props.repo, config: this.props.config },
+      this.dataLoaded.bind(this)
+    );
   }
   setUser(data) {
-    this.setState({user: data});
+    this.setState({ user: data });
   }
   addImage(data) {
     var imgs = [data].concat(this.state.images);
-    this.setState({images: imgs});
+    this.setState({ images: imgs });
   }
   render() {
     if (this.state.loaded === false) return <Loading />;
     var config = this.state.config;
-    return (<div>
+    return (
       <div>
-        <h1>{config.name}</h1>
-        <p>{config.description}</p>
-        <User user={this.state.user} update={this.setUser} />
+        <div>
+          <h1>{config.name}</h1>
+          <p>{config.description}</p>
+          <User user={this.state.user} update={this.setUser} />
+        </div>
+        <Images images={this.state.images} add={this.addImage} />
       </div>
-      <Images images={this.state.images} add={this.addImage} />
-    </div>);
+    );
   }
-};
+}
 
 module.exports = ImageCorpusApp;
-
- 
