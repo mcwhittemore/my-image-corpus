@@ -21156,10 +21156,16 @@ function extend() {
 },{}],189:[function(require,module,exports){
 var xhr = require('xhr');
 
+var userApi = require('./user');
+
 module.exports = function (opts, cb) {
-  loadData(opts, function (err, data) {
+  userApi.load(function (err, user) {
     if (err) return cb(err);
-    loadImages(data, cb);
+    opts.user = user || null;
+    loadData(opts, function (err, data) {
+      if (err) return cb(err);
+      loadImages(data, cb);
+    });
   });
 };
 
@@ -21190,24 +21196,78 @@ function loadImages(opts, cb) {
   });
 }
 
-},{"xhr":187}],190:[function(require,module,exports){
+},{"./user":190,"xhr":187}],190:[function(require,module,exports){
+var xhr = require('xhr');
+
+var api = module.exports = {};
+
+api.save = function (data, cb) {
+  var error = null;
+  try {
+    localStorage.setItem('user-token', data.token);
+  } catch (err) {
+    error = err;
+  }
+  setTimeout(function () {
+    cb(error);
+  });
+};
+
+api.load = function (cb) {
+  var token = localStorage.getItem('user-token');
+  if (token === null) {
+    return setTimeout(() => cb(null, null));
+  }
+
+  api.getGithubUser(token, function (err, data) {
+    if (err) return cb(err);
+    cb(null, data);
+  });
+};
+
+api.getGithubUser = function (token, cb) {
+  xhr({
+    url: `https://api.github.com/user?access_token=${token}`
+  }, function (err, resp, body) {
+    if (err) return cb(err);
+    body = JSON.parse(body);
+    if (resp.statusCode >= 400) return cb(new Error(body.message));
+    cb(null, {
+      avatar: body.avatar_url,
+      login: body.login,
+      token: token
+    });
+  });
+};
+
+/*
+function loadData(opts, cb) {
+  xhr(
+    {
+      uri: `https://api.github.com/repos/${opts.repo}/contents/${opts.config}`,
+      headers: {
+        accept: 'application/vnd.github.VERSION.raw'
+      }
+    },
+    function(err, resp, body) {
+      if (err) return cb(err);
+      var config = JSON.parse(body);
+      opts.configData = config;
+      cb(null, opts);
+    }
+  );
+}
+*/
+
+},{"xhr":187}],191:[function(require,module,exports){
 var React = require('react');
 
-var Loading = require('./loading');
-var User = props => React.createElement(
-  'div',
-  null,
-  'USER: ',
-  JSON.stringify(props)
-);
-var Images = props => React.createElement(
-  'div',
-  null,
-  'IMAGES: ',
-  JSON.stringify(props)
-);
+var Message = require('./message');
+var User = require('./user');
+var Images = require('./images');
 
 var loadData = require('./api/load');
+var apiUser = require('./api/user');
 
 class ImageCorpusApp extends React.Component {
   constructor(props) {
@@ -21225,48 +21285,73 @@ class ImageCorpusApp extends React.Component {
     this.setState({
       loaded: true,
       config: opts.configData,
-      images: opts.images
+      images: opts.images,
+      user: opts.user
     });
   }
   componentDidMount() {
     loadData({ repo: this.props.repo, config: this.props.config }, this.dataLoaded.bind(this));
   }
   setUser(data) {
-    this.setState({ user: data });
+    apiUser.save(data, error => {
+      if (error) return this.setState({ error });
+      this.setState({ user: data });
+    });
   }
   addImage(data) {
     var imgs = [data].concat(this.state.images);
     this.setState({ images: imgs });
   }
   render() {
-    if (this.state.loaded === false) return React.createElement(Loading, null);
+    if (this.state.loaded === false) return React.createElement(Message, { msg: 'Loading...' });
+    if (this.state.error !== null) return React.createElement(Message, { msg: this.state.error.message });
     var config = this.state.config;
     return React.createElement(
       'div',
-      { className: 'm0 grid grid--gut12' },
+      { className: 'm0' },
       React.createElement(
         'div',
-        { className: 'col--12 prose' },
+        { className: 'grid prose bg-teal-light' },
         React.createElement(
-          'h1',
-          null,
-          config.name
+          'div',
+          { className: 'col--10' },
+          React.createElement(
+            'h1',
+            { className: 'm3' },
+            config.name
+          ),
+          React.createElement(
+            'p',
+            { className: 'px6' },
+            config.description
+          )
         ),
-        React.createElement(
-          'p',
-          null,
-          config.description
-        ),
-        React.createElement(User, { user: this.state.user, update: this.setUser })
+        React.createElement(User, { user: this.state.user, update: this.setUser.bind(this), add: this.addImage.bind(this) })
       ),
-      React.createElement(Images, { images: this.state.images, add: this.addImage, canAdd: this.state.user !== null })
+      React.createElement(Images, { images: this.state.images })
     );
   }
 }
 
 module.exports = ImageCorpusApp;
 
-},{"./api/load":189,"./loading":192,"react":185}],191:[function(require,module,exports){
+},{"./api/load":189,"./api/user":190,"./images":192,"./message":194,"./user":195,"react":185}],192:[function(require,module,exports){
+var React = require('react');
+
+var Image = props => React.createElement(
+  'div',
+  null,
+  'IMAGE: ',
+  JSON.stringify(props.data)
+);
+
+module.exports = props => React.createElement(
+  'div',
+  { className: 'grid mx3' },
+  props.images.map(img => React.createElement(Image, { key: img.src, data: img }))
+);
+
+},{"react":185}],193:[function(require,module,exports){
 var ReactDOM = require('react-dom');
 var React = require('react');
 
@@ -21274,10 +21359,10 @@ var ImageCorpusApp = require('./image-corpus-app');
 
 ReactDOM.render(React.createElement(ImageCorpusApp, { repo: 'mcwhittemore/pastoral', config: 'config.json' }), document.getElementById('app'));
 
-},{"./image-corpus-app":190,"react":185,"react-dom":34}],192:[function(require,module,exports){
+},{"./image-corpus-app":191,"react":185,"react-dom":34}],194:[function(require,module,exports){
 var React = require('react');
 
-module.exports = () => {
+module.exports = props => {
   return React.createElement(
     "div",
     { className: "grid grid--gut12 absolute top left bottom right" },
@@ -21288,10 +21373,53 @@ module.exports = () => {
         className: "col col--4 align-center relative",
         style: { top: '50%', height: '50%' }
       },
-      "Loading..."
+      props.msg
     ),
     React.createElement("div", { className: "col col--4" })
   );
 };
 
-},{"react":185}]},{},[191]);
+},{"react":185}],195:[function(require,module,exports){
+var React = require('react');
+
+var apiUser = require('./api/user');
+
+class Login extends React.Component {
+  login() {
+    console.log(this.props);
+    var token = prompt('Github Access Token:') || '';
+    token = token.trim();
+    if (token.length != 0) {
+      apiUser.getGithubUser(token, (err, data) => {
+        if (err) return alert(err.message);
+        console.log('user data', data);
+        this.props.update(data);
+      });
+    }
+  }
+  render() {
+    const style = {
+      margin: '20%',
+      float: 'right'
+    };
+    return React.createElement(
+      'button',
+      { style: style, className: 'btn btn--gray btn--stroke', onClick: this.login.bind(this) },
+      'Login'
+    );
+  }
+}
+
+class User extends React.Component {
+  render() {
+    return React.createElement('img', { src: this.props.user.avatar });
+  }
+}
+
+module.exports = props => React.createElement(
+  'div',
+  { className: 'col--2' },
+  props.user ? React.createElement(User, { user: props.user, add: props.add }) : React.createElement(Login, { update: props.update })
+);
+
+},{"./api/user":190,"react":185}]},{},[193]);

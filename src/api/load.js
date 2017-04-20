@@ -1,9 +1,15 @@
 var xhr = require('xhr');
 
+var userApi = require('./user');
+
 module.exports = function(opts, cb) {
-  loadData(opts, function(err, data) {
+  userApi.load(function(err, user) {
     if (err) return cb(err);
-    loadImages(data, cb);
+    opts.user = user || null;
+    loadData(opts, function(err, data) {
+      if (err) return cb(err);
+      loadImages(data, cb);
+    });
   });
 };
 
