@@ -1,5 +1,5 @@
 {
-  "name": "Pastoral Image Corpus",
-  "description": "a website dedicated to cataloging pastoral photos on the internet",
+  "name": "My Image Corpus",
+  "description": "a simple tool for helping me gather and tag photos",
   "images": "images.json"
 }

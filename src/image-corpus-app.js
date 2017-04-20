@@ -1,8 +1,8 @@
 var React = require('react');
 
 var Loading = require('./loading');
-var User = () => <div>User</div>;
-var Images = () => <div>Images</div>;
+var User = (props) => <div>USER: {JSON.stringify(props)}</div>;
+var Images = (props) => <div>IMAGES: {JSON.stringify(props)}</div>;
 
 var loadData = require('./api/load');
 
@@ -42,13 +42,13 @@ class ImageCorpusApp extends React.Component {
     if (this.state.loaded === false) return <Loading />;
     var config = this.state.config;
     return (
-      <div>
-        <div>
+      <div className='m0 grid grid--gut12'>
+        <div className='col--12 prose'>
           <h1>{config.name}</h1>
           <p>{config.description}</p>
           <User user={this.state.user} update={this.setUser} />
         </div>
-        <Images images={this.state.images} add={this.addImage} />
+        <Images images={this.state.images} add={this.addImage} canAdd={this.state.user !== null} />
       </div>
     );
   }

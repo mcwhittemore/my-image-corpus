@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "build": "browserify -t [ babelify --presets [ react ] ] src/index.js -o build/app.js"
+    "build": "browserify -t [ babelify --presets [ react ] ] src/index.js -o build/app.js",
+    "watch": "watchify -t [ babelify --presets [ react ] ] src/index.js -o build/app.js"
   },
   "dependencies": {
     "babel-preset-react": "^6.24.1",
@@ -10,6 +11,7 @@
     "prettier": "^1.1.0",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
+    "watchify": "^3.9.0",
     "xhr": "^2.4.0"
   },
   "lint-staged": {

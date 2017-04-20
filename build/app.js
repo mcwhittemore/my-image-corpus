@@ -21167,7 +21167,7 @@ function loadData(opts, cb) {
   xhr({
     uri: `https://api.github.com/repos/${opts.repo}/contents/${opts.config}`,
     headers: {
-      'accept': 'application/vnd.github.VERSION.raw'
+      accept: 'application/vnd.github.VERSION.raw'
     }
   }, function (err, resp, body) {
     if (err) return cb(err);
@@ -21181,7 +21181,7 @@ function loadImages(opts, cb) {
   xhr({
     uri: `https://api.github.com/repos/${opts.repo}/contents/${opts.configData.images}`,
     headers: {
-      'accept': 'application/vnd.github.VERSION.raw'
+      accept: 'application/vnd.github.VERSION.raw'
     }
   }, function (err, resp, body) {
     if (err) return cb(err);
@@ -21194,15 +21194,17 @@ function loadImages(opts, cb) {
 var React = require('react');
 
 var Loading = require('./loading');
-var User = () => React.createElement(
+var User = props => React.createElement(
   'div',
   null,
-  'User'
+  'USER: ',
+  JSON.stringify(props)
 );
-var Images = () => React.createElement(
+var Images = props => React.createElement(
   'div',
   null,
-  'Images'
+  'IMAGES: ',
+  JSON.stringify(props)
 );
 
 var loadData = require('./api/load');
@@ -21241,10 +21243,10 @@ class ImageCorpusApp extends React.Component {
     var config = this.state.config;
     return React.createElement(
       'div',
-      null,
+      { className: 'm0 grid grid--gut12' },
       React.createElement(
         'div',
-        null,
+        { className: 'col--12 prose' },
         React.createElement(
           'h1',
           null,
@@ -21257,10 +21259,10 @@ class ImageCorpusApp extends React.Component {
         ),
         React.createElement(User, { user: this.state.user, update: this.setUser })
       ),
-      React.createElement(Images, { images: this.state.images, add: this.addImage })
+      React.createElement(Images, { images: this.state.images, add: this.addImage, canAdd: this.state.user !== null })
     );
   }
-};
+}
 
 module.exports = ImageCorpusApp;
 
@@ -21277,15 +21279,18 @@ var React = require('react');
 
 module.exports = () => {
   return React.createElement(
-    'div',
-    { className: 'grid grid--gut12 absolute top left bottom right' },
-    React.createElement('div', { className: 'col col--4' }),
+    "div",
+    { className: "grid grid--gut12 absolute top left bottom right" },
+    React.createElement("div", { className: "col col--4" }),
     React.createElement(
-      'div',
-      { className: 'col col--4 align-center relative', style: { top: '50%', height: '50%' } },
-      'Loading...'
+      "div",
+      {
+        className: "col col--4 align-center relative",
+        style: { top: '50%', height: '50%' }
+      },
+      "Loading..."
     ),
-    React.createElement('div', { className: 'col col--4' })
+    React.createElement("div", { className: "col col--4" })
   );
 };
 
