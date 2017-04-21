@@ -21400,12 +21400,12 @@ class ImageCorpusApp extends React.Component {
           { className: 'col--10' },
           React.createElement(
             'h1',
-            { className: 'm3' },
+            { className: 'm6' },
             config.name
           ),
           React.createElement(
             'p',
-            { className: 'px6' },
+            { className: 'px12' },
             config.description
           )
         ),
@@ -21421,12 +21421,25 @@ module.exports = ImageCorpusApp;
 },{"./api/images":189,"./api/load":190,"./api/user":191,"./images":193,"./message":195,"./user":196,"react":185}],193:[function(require,module,exports){
 var React = require('react');
 
-var Image = props => React.createElement(
-  'div',
-  null,
-  'IMAGE: ',
-  JSON.stringify(props.data)
-);
+class Image extends React.Component {
+  render() {
+    var img = this.props.data;
+    return React.createElement(
+      'div',
+      { className: 'm6 bg-gray-light p6 w240' },
+      React.createElement('img', { src: img.src, width: '100%' }),
+      React.createElement(
+        'div',
+        null,
+        img.tags.map(t => React.createElement(
+          'div',
+          { className: 'round-bold bg-green-light inline-block p3 m3' },
+          t
+        ))
+      )
+    );
+  }
+}
 
 module.exports = props => React.createElement(
   'div',

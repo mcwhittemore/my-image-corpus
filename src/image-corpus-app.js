@@ -66,8 +66,8 @@ class ImageCorpusApp extends React.Component {
       <div className='m0'>
         <div className='grid prose bg-teal-light'>
           <div className='col--10'>
-            <h1 className='m3'>{config.name}</h1>
-            <p className='px6'>{config.description}</p>
+            <h1 className='m6'>{config.name}</h1>
+            <p className='px12'>{config.description}</p>
           </div>
           <User user={this.state.user} update={this.setUser.bind(this)} add={this.addImage.bind(this)} />
         </div>
