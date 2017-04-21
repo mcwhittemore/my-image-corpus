@@ -48,9 +48,10 @@ api.add = function(img, cb) {
 
 api.loadRaw = function(cb) {
   if (repo === null) setTimeout(() => cb(new Error('Not configured')));
+  var ts = token ? `?access_token=${token}` : '';
   xhr(
     {
-      uri: `https://api.github.com/repos/${repo}/contents/${file}`,
+      uri: `https://api.github.com/repos/${repo}/contents/${file}${ts}`,
       headers: {
         accept: 'application/vnd.github.VERSION.raw'
       }
@@ -64,9 +65,10 @@ api.loadRaw = function(cb) {
 
 api.load = function(cb) {
   if (repo === null) setTimeout(() => cb(new Error('Not configured')));
+  var ts = token ? `?access_token=${token}` : '';
   xhr(
     {
-      uri: `https://api.github.com/repos/${repo}/contents/${file}`,
+      uri: `https://api.github.com/repos/${repo}/contents/${file}${ts}`,
       headers: {
         accept: 'application/json'
       }

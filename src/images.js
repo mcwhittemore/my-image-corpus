@@ -6,7 +6,7 @@ class Image extends React.Component {
     return <div className='m6 bg-gray-light p6 w240'>
       <img src={img.src} width='100%' />
       <div>
-        {img.tags.map((t) => <div className='round-bold bg-green-light inline-block p3 m3'>{t}</div>)}
+        {img.tags.map((t) => <div key={t} className='round-bold bg-green-light inline-block p3 m3'>{t}</div>)}
       </div>
     </div>;
   }

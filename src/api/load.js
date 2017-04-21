@@ -16,9 +16,10 @@ module.exports = function(opts, cb) {
 };
 
 function loadData(opts, cb) {
+  var ts = opts.user ? `?access_token=${opts.user.token}` : '';
   xhr(
     {
-      uri: `https://api.github.com/repos/${opts.repo}/contents/${opts.config}`,
+      uri: `https://api.github.com/repos/${opts.repo}/contents/${opts.config}${ts}`,
       headers: {
         accept: 'application/vnd.github.VERSION.raw'
       }

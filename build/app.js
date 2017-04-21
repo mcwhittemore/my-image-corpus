@@ -21199,8 +21199,9 @@ api.add = function (img, cb) {
 
 api.loadRaw = function (cb) {
   if (repo === null) setTimeout(() => cb(new Error('Not configured')));
+  var ts = token ? `?access_token=${token}` : '';
   xhr({
-    uri: `https://api.github.com/repos/${repo}/contents/${file}`,
+    uri: `https://api.github.com/repos/${repo}/contents/${file}${ts}`,
     headers: {
       accept: 'application/vnd.github.VERSION.raw'
     }
@@ -21212,8 +21213,9 @@ api.loadRaw = function (cb) {
 
 api.load = function (cb) {
   if (repo === null) setTimeout(() => cb(new Error('Not configured')));
+  var ts = token ? `?access_token=${token}` : '';
   xhr({
-    uri: `https://api.github.com/repos/${repo}/contents/${file}`,
+    uri: `https://api.github.com/repos/${repo}/contents/${file}${ts}`,
     headers: {
       accept: 'application/json'
     }
@@ -21242,8 +21244,9 @@ module.exports = function (opts, cb) {
 };
 
 function loadData(opts, cb) {
+  var ts = opts.user ? `?access_token=${opts.user.token}` : '';
   xhr({
-    uri: `https://api.github.com/repos/${opts.repo}/contents/${opts.config}`,
+    uri: `https://api.github.com/repos/${opts.repo}/contents/${opts.config}${ts}`,
     headers: {
       accept: 'application/vnd.github.VERSION.raw'
     }
@@ -21433,7 +21436,7 @@ class Image extends React.Component {
         null,
         img.tags.map(t => React.createElement(
           'div',
-          { className: 'round-bold bg-green-light inline-block p3 m3' },
+          { key: t, className: 'round-bold bg-green-light inline-block p3 m3' },
           t
         ))
       )
