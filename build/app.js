@@ -21434,9 +21434,9 @@ class Image extends React.Component {
       React.createElement(
         'div',
         null,
-        img.tags.map(t => React.createElement(
+        img.tags.map((t, i) => React.createElement(
           'div',
-          { key: t, className: 'round-bold bg-green-light inline-block p3 m3' },
+          { key: `${t}-${i}`, className: 'round-bold bg-green-light inline-block p3 m3' },
           t
         ))
       )
@@ -21456,7 +21456,12 @@ var React = require('react');
 
 var ImageCorpusApp = require('./image-corpus-app');
 
-ReactDOM.render(React.createElement(ImageCorpusApp, { repo: 'mcwhittemore/pastoral', config: 'config.json' }), document.getElementById('app'));
+var de = document.getElementById('app');
+
+var repo = de.getAttribute('data-repo');
+var config = de.getAttribute('data-config');
+
+ReactDOM.render(React.createElement(ImageCorpusApp, { repo: repo, config: config }), de);
 
 },{"./image-corpus-app":192,"react":185,"react-dom":34}],195:[function(require,module,exports){
 var React = require('react');
