@@ -21156,12 +21156,84 @@ function extend() {
 },{}],189:[function(require,module,exports){
 var xhr = require('xhr');
 
-var userApi = require('./user');
+var api = module.exports = {};
+
+var repo = null;
+var file = null;
+var token = null;
+
+api.config = function (r, f, t) {
+  repo = r || repo;
+  file = f || file;
+  token = t || token;
+};
+
+api.add = function (img, cb) {
+  if (repo === null) setTimeout(() => cb(new Error('Not configured')));
+  api.load(function (err, about) {
+    if (err) return cb(err);
+    var images;
+    try {
+      images = JSON.parse(atob(about.content));
+    } catch (err) {
+      return cb(err);
+    }
+    var m = images.filter(i => i.src === img.src);
+    if (m.length) return cb(new Error('Image is already in the database'));
+    images = [img].concat(images);
+    xhr({
+      uri: `https://api.github.com/repos/${repo}/contents/${file}?access_token=${token}`,
+      method: 'PUT',
+      json: { message: `adding ${img.src} to the database`,
+        content: btoa(JSON.stringify(images, null, 2)),
+        sha: about.sha
+      }
+    }, function (err, resp, body) {
+      if (err) return cb(err);
+      if (typeof body === 'string') body = JSON.parse(body);
+      if (resp.statusCode >= 400) return cb(new Error(body.message));
+      cb(null, images);
+    });
+  });
+};
+
+api.loadRaw = function (cb) {
+  if (repo === null) setTimeout(() => cb(new Error('Not configured')));
+  xhr({
+    uri: `https://api.github.com/repos/${repo}/contents/${file}`,
+    headers: {
+      accept: 'application/vnd.github.VERSION.raw'
+    }
+  }, function (err, resp, body) {
+    if (err) return cb(err);
+    cb(null, JSON.parse(body));
+  });
+};
+
+api.load = function (cb) {
+  if (repo === null) setTimeout(() => cb(new Error('Not configured')));
+  xhr({
+    uri: `https://api.github.com/repos/${repo}/contents/${file}`,
+    headers: {
+      accept: 'application/json'
+    }
+  }, function (err, resp, body) {
+    if (err) return cb(err);
+    cb(null, JSON.parse(body));
+  });
+};
+
+},{"xhr":187}],190:[function(require,module,exports){
+var xhr = require('xhr');
+
+var apiUser = require('./user');
+var apiImages = require('./images');
 
 module.exports = function (opts, cb) {
-  userApi.load(function (err, user) {
+  apiUser.load(function (err, user) {
     if (err) return cb(err);
     opts.user = user || null;
+    if (opts.user !== null) apiImages.config(null, null, opts.user.token);
     loadData(opts, function (err, data) {
       if (err) return cb(err);
       loadImages(data, cb);
@@ -21184,19 +21256,15 @@ function loadData(opts, cb) {
 }
 
 function loadImages(opts, cb) {
-  xhr({
-    uri: `https://api.github.com/repos/${opts.repo}/contents/${opts.configData.images}`,
-    headers: {
-      accept: 'application/vnd.github.VERSION.raw'
-    }
-  }, function (err, resp, body) {
-    if (err) return cb(err);
-    opts.images = JSON.parse(body);
+  apiImages.config(opts.repo, opts.configData.images);
+  apiImages.loadRaw(function (err, images) {
+    if (err) cb(err);
+    opts.images = images;
     cb(null, opts);
   });
 }
 
-},{"./user":190,"xhr":187}],190:[function(require,module,exports){
+},{"./images":189,"./user":191,"xhr":187}],191:[function(require,module,exports){
 var xhr = require('xhr');
 
 var api = module.exports = {};
@@ -21259,7 +21327,7 @@ function loadData(opts, cb) {
 }
 */
 
-},{"xhr":187}],191:[function(require,module,exports){
+},{"xhr":187}],192:[function(require,module,exports){
 var React = require('react');
 
 var Message = require('./message');
@@ -21267,6 +21335,7 @@ var User = require('./user');
 var Images = require('./images');
 
 var loadData = require('./api/load');
+var apiImages = require('./api/images');
 var apiUser = require('./api/user');
 
 class ImageCorpusApp extends React.Component {
@@ -21286,11 +21355,23 @@ class ImageCorpusApp extends React.Component {
       loaded: true,
       config: opts.configData,
       images: opts.images,
-      user: opts.user
+      user: opts.user,
+      clearError: null
     });
   }
   componentDidMount() {
     loadData({ repo: this.props.repo, config: this.props.config }, this.dataLoaded.bind(this));
+
+    var ce = setInterval(() => {
+      if (this.state.error !== null) {
+        this.setState({ error: null });
+      }
+    }, 1000);
+
+    this.setState({ clearError: ce });
+  }
+  componentWillUnmount() {
+    if (this.state.clearError) clearInterval(this.state.clearError);
   }
   setUser(data) {
     apiUser.save(data, error => {
@@ -21298,9 +21379,11 @@ class ImageCorpusApp extends React.Component {
       this.setState({ user: data });
     });
   }
-  addImage(data) {
-    var imgs = [data].concat(this.state.images);
-    this.setState({ images: imgs });
+  addImage(img) {
+    apiImages.add(img, (error, imgs) => {
+      if (error) return this.setState({ error });
+      this.setState({ images: imgs });
+    });
   }
   render() {
     if (this.state.loaded === false) return React.createElement(Message, { msg: 'Loading...' });
@@ -21335,7 +21418,7 @@ class ImageCorpusApp extends React.Component {
 
 module.exports = ImageCorpusApp;
 
-},{"./api/load":189,"./api/user":190,"./images":192,"./message":194,"./user":195,"react":185}],192:[function(require,module,exports){
+},{"./api/images":189,"./api/load":190,"./api/user":191,"./images":193,"./message":195,"./user":196,"react":185}],193:[function(require,module,exports){
 var React = require('react');
 
 var Image = props => React.createElement(
@@ -21351,7 +21434,7 @@ module.exports = props => React.createElement(
   props.images.map(img => React.createElement(Image, { key: img.src, data: img }))
 );
 
-},{"react":185}],193:[function(require,module,exports){
+},{"react":185}],194:[function(require,module,exports){
 var ReactDOM = require('react-dom');
 var React = require('react');
 
@@ -21359,7 +21442,7 @@ var ImageCorpusApp = require('./image-corpus-app');
 
 ReactDOM.render(React.createElement(ImageCorpusApp, { repo: 'mcwhittemore/pastoral', config: 'config.json' }), document.getElementById('app'));
 
-},{"./image-corpus-app":191,"react":185,"react-dom":34}],194:[function(require,module,exports){
+},{"./image-corpus-app":192,"react":185,"react-dom":34}],195:[function(require,module,exports){
 var React = require('react');
 
 module.exports = props => {
@@ -21379,20 +21462,18 @@ module.exports = props => {
   );
 };
 
-},{"react":185}],195:[function(require,module,exports){
+},{"react":185}],196:[function(require,module,exports){
 var React = require('react');
 
 var apiUser = require('./api/user');
 
 class Login extends React.Component {
   login() {
-    console.log(this.props);
     var token = prompt('Github Access Token:') || '';
     token = token.trim();
     if (token.length != 0) {
       apiUser.getGithubUser(token, (err, data) => {
         if (err) return alert(err.message);
-        console.log('user data', data);
         this.props.update(data);
       });
     }
@@ -21411,8 +21492,52 @@ class Login extends React.Component {
 }
 
 class User extends React.Component {
+  add() {
+    var page = prompt('Url of where you found this');
+    if (page === null || page === '') return;
+
+    var parts = page.split('/');
+    var site = parts[2];
+
+    var src = '';
+    var tags = [];
+
+    if (site === 'www.instagram.com') {
+      src = `https://www.instagram.com/p/${parts[4]}/media/?size=l`;
+      tags.push('instagram');
+    }
+
+    src = prompt('Image Url:', src);
+    if (src === null || src === '') return;
+
+    var last = null;
+    while (last !== '') {
+      last = (prompt('Tag?') || '').trim();
+      if (last != '') {
+        tags.push(last.trim());
+      }
+    }
+
+    this.props.add({
+      src,
+      page,
+      tags
+    });
+  }
   render() {
-    return React.createElement('img', { src: this.props.user.avatar });
+    const style = {
+      float: 'right'
+    };
+    return React.createElement(
+      'div',
+      { className: 'w48 m6', style: style },
+      React.createElement('img', { className: 'w48 m0 round-bold', src: this.props.user.avatar }),
+      React.createElement(
+        'button',
+        { className: 'btn btn--s btn--gray btn--stroke', onClick: this.add.bind(this) },
+        'Add'
+      )
+    );
   }
 }
 
@@ -21422,4 +21547,4 @@ module.exports = props => React.createElement(
   props.user ? React.createElement(User, { user: props.user, add: props.add }) : React.createElement(Login, { update: props.update })
 );
 
-},{"./api/user":190,"react":185}]},{},[193]);
+},{"./api/user":191,"react":185}]},{},[194]);

@@ -5,6 +5,7 @@ var User = require('./user');
 var Images = require('./images');
 
 var loadData = require('./api/load');
+var apiImages = require('./api/images');
 var apiUser = require('./api/user');
 
 class ImageCorpusApp extends React.Component {
@@ -24,7 +25,8 @@ class ImageCorpusApp extends React.Component {
       loaded: true,
       config: opts.configData,
       images: opts.images,
-      user: opts.user
+      user: opts.user,
+      clearError: null
     });
   }
   componentDidMount() {
@@ -32,6 +34,17 @@ class ImageCorpusApp extends React.Component {
       { repo: this.props.repo, config: this.props.config },
       this.dataLoaded.bind(this)
     );
+
+    var ce = setInterval(() => {
+      if (this.state.error !== null) {
+        this.setState({error: null});
+      }
+    }, 1000);
+
+    this.setState({clearError:ce});
+  }
+  componentWillUnmount() {
+    if (this.state.clearError) clearInterval(this.state.clearError);
   }
   setUser(data) {
     apiUser.save(data, (error) => {
@@ -39,9 +52,11 @@ class ImageCorpusApp extends React.Component {
       this.setState({ user: data });
     });
   }
-  addImage(data) {
-    var imgs = [data].concat(this.state.images);
-    this.setState({ images: imgs });
+  addImage(img) {
+    apiImages.add(img, (error, imgs) => {
+      if (error) return this.setState({error});
+      this.setState({ images: imgs });
+    });
   }
   render() {
     if (this.state.loaded === false) return <Message msg='Loading...' />;

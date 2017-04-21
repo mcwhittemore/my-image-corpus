@@ -1,11 +1,13 @@
 var xhr = require('xhr');
 
-var userApi = require('./user');
+var apiUser = require('./user');
+var apiImages = require('./images');
 
 module.exports = function(opts, cb) {
-  userApi.load(function(err, user) {
+  apiUser.load(function(err, user) {
     if (err) return cb(err);
     opts.user = user || null;
+    if (opts.user !== null) apiImages.config(null, null, opts.user.token);
     loadData(opts, function(err, data) {
       if (err) return cb(err);
       loadImages(data, cb);
@@ -31,17 +33,10 @@ function loadData(opts, cb) {
 }
 
 function loadImages(opts, cb) {
-  xhr(
-    {
-      uri: `https://api.github.com/repos/${opts.repo}/contents/${opts.configData.images}`,
-      headers: {
-        accept: 'application/vnd.github.VERSION.raw'
-      }
-    },
-    function(err, resp, body) {
-      if (err) return cb(err);
-      opts.images = JSON.parse(body);
-      cb(null, opts);
-    }
-  );
+  apiImages.config(opts.repo, opts.configData.images)
+  apiImages.loadRaw(function(err, images) {
+    if (err) cb(err);
+    opts.images = images;
+    cb(null, opts);
+  });
 }

@@ -4,13 +4,11 @@ var apiUser = require('./api/user');
 
 class Login extends React.Component {
   login() {
-    console.log(this.props);
     var token = prompt('Github Access Token:') || '';
     token = token.trim();
     if (token.length != 0) {
       apiUser.getGithubUser(token, (err, data) => {
         if (err) return alert(err.message);
-        console.log('user data', data);
         this.props.update(data);
       });
     }
@@ -25,8 +23,46 @@ class Login extends React.Component {
 }
 
 class User extends React.Component {
+  add() {
+    var page = prompt('Url of where you found this');
+    if (page === null || page === '') return;
+
+    var parts = page.split('/');
+    var site = parts[2];
+
+    var src = '';
+    var tags = [];
+    
+    if (site === 'www.instagram.com') {
+      src = `https://www.instagram.com/p/${parts[4]}/media/?size=l`;
+      tags.push('instagram');
+    }
+
+    src = prompt('Image Url:', src);
+    if (src === null || src === '') return;
+
+    var last = null;
+    while (last !== '') {
+      last = (prompt('Tag?') || '').trim();
+      if (last != '') {
+        tags.push(last.trim());
+      }
+    }
+
+    this.props.add({
+      src,
+      page,
+      tags
+    })
+  }
   render() {
-    return <img src={this.props.user.avatar} />
+    const style = {
+      float: 'right'
+    };
+    return <div className='w48 m6' style={style}>
+      <img className='w48 m0 round-bold' src={this.props.user.avatar} />
+      <button className='btn btn--s btn--gray btn--stroke' onClick={this.add.bind(this)}>Add</button>
+    </div>;
   }
 }
 
